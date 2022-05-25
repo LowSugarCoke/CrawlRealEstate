@@ -10,7 +10,7 @@ def real_estate_crawler(year, season):
 
     # download real estate zip file
     res = requests.get("https://plvr.land.moi.gov.tw//DownloadSeason?season=" +
-                       str(year)+"S"+str(season)+"&type=zip&fileName=lvr_landxml.zip")
+                       str(year)+"S"+str(season)+"&type=zip&fileName=lvr_landcsv.zip")
 
     # save content to file
     fname = str(year)+str(season)+'.zip'
@@ -28,13 +28,7 @@ def real_estate_crawler(year, season):
     time.sleep(10)
 
 
-real_estate_crawler(101, 3)
-real_estate_crawler(101, 4)
-
-for year in range(102, 108):
+for year in range(109, 112):
     for season in range(1, 5):
-        print(year, season)
+        print('crawl ', year, 'Q', season)
         real_estate_crawler(year, season)
-
-real_estate_crawler(108, 1)
-real_estate_crawler(108, 2)
