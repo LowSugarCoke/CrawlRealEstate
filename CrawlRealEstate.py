@@ -28,7 +28,7 @@ def real_estate_crawler(year, season):
     time.sleep(10)
 
 
-for year in range(109, 112):
+for year in range(102, 112):
     for season in range(1, 5):
         print('crawl ', year, 'Q', season)
         real_estate_crawler(year, season)
