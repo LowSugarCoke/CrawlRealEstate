@@ -4,6 +4,9 @@ import pandas as pd
 import plotly.express as px
 from matplotlib.font_manager import FontProperties
 import matplotlib.pyplot as plt
+import difflib
+import csv
+
 
 # Part 1 資料匯入及處裡
 
@@ -146,6 +149,8 @@ plt.rcParams['figure.figsize'] = (10, 6)
 # prices 是一個 dictionary, key是放哪一區, value 放每年每坪的價格
 prices = {}
 
+building_list = {}
+
 # 所有區的建物價格加總
 total_money = 0
 total_building = 0
@@ -176,6 +181,7 @@ for district in set(df['鄉鎮市區']):
         float).mean())
     print(district, ", 建物數量 = ", len(df[cond]['單價元坪']))
     print('建物地址 ', df[cond]['土地位置建物門牌'])
+    building_list[district] = df[cond]['土地位置建物門牌'].tolist()
 
 print(location, ", 單價元坪 = ", total_money/total_building)
 print(location, ", 建物價格總和 = ", total_money)
@@ -183,6 +189,7 @@ print(location, ", 建物數量 = ", total_building)
 
 
 print(prices)
+
 
 # for district in set(df['鄉鎮市區']):
 #     print(prices[district])
@@ -196,6 +203,61 @@ plt.legend(prop=myfont)
 plt.show()
 
 
+def string_similar(s1, s2):
+    return difflib.SequenceMatcher(None, s1, s2).quick_ratio()
+
+
+community_total = {}
+
+for district_building in building_list:
+    # print(district_building)
+    # print(building_list[district_building])
+    # print(type(building_list[district_building]))
+    for i in range(len(building_list[district_building])):
+        building_list[district_building][i] = building_list[district_building][i].replace(
+            district_building, "").replace("臺北市", "")
+        # building_list[i] = building_list[i].replace(district_building)
+    # print(building_list[district_building])
+
+    r = len(building_list[district_building])
+
+    community_total[district_building] = []
+    i = 0
+    while i < r:
+        l = []
+
+        l.append("台北市"+district_building + building_list[district_building][i])
+        for j in range(len(building_list[district_building])-1, i, -1):
+            if string_similar(building_list[district_building][i], building_list[district_building][j]) > 0.7:
+                l.append("台北市"+district_building +
+                         building_list[district_building][j])
+                del building_list[district_building][j]
+
+        del building_list[district_building][i]
+        community_total[district_building].append(l)
+
+        r = len(building_list[district_building])
+
+        # print(building_list[district_building][i]+" " + building_list[district_building][j]+" ", string_similar(
+        #     building_list[district_building][i], building_list[district_building][j]))
+
+for a in community_total:
+    print(a)
+    for i in range(len(community_total[a])):
+        print(community_total[a][i])
+
+
+with open('district.txt', 'w') as f:
+    for key in community_total.keys():
+        f.write("%s\n" % (key))
+        index = 1
+        for i in range(len(community_total[key])):
+            f.write("%s. %s\n" % (str(index), community_total[key][i]))
+            index += 1
+
+        f.write("\n")
+
+# print(community_total)
 # # dropna丟棄空值的行列
 # district_price = df.reset_index()[['鄉鎮市區', '單價元坪']].dropna()
 # district_price = district_price[district_price['單價元坪'] < 2000000]
