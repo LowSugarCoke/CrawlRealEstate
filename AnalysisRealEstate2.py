@@ -1,3 +1,4 @@
+from distutils.command.build import build
 from itertools import groupby
 import os
 import pandas as pd
@@ -14,7 +15,7 @@ import csv
 myfont = FontProperties(fname=r'./TaipeiSansTCBeta-Regular.ttf')
 myfont.set_size(15)
 
-location_all = ["台北市", "桃園縣"]
+location_all = ["台北市"]
 
 location_str = """台北市 A 苗栗縣 K 花蓮縣 U
                   台中市 B 台中縣 L 台東縣 V
@@ -23,7 +24,7 @@ location_str = """台北市 A 苗栗縣 K 花蓮縣 U
                   高雄市 E 雲林縣 P 金門縣 W
                   台北縣 F 嘉義縣 Q 連江縣 Z
                   宜蘭縣 G 台南縣 R 嘉義市 I
-                  桃園縣 H 高雄縣 S 新竹市 O
+                  桃園市 H 高雄縣 S 新竹市 O
                   新竹縣 J 屏東縣 T"""
 
 # List切片用法
@@ -96,7 +97,7 @@ for location in location_all:
 
     # # # 刪除有備註之交易（多為親友交易、價格不正常之交易）
     df = df[df['備註'].isnull()]
-    df = df[df['建築完成年月'].notnull()]
+    # df = df[df['建築完成年月'].notnull()]
 
     # # # 將index改成年月日
     df.index = pd.to_datetime(df['year'].astype(
@@ -162,7 +163,8 @@ for location in location_all:
             & (df['鄉鎮市區'] == district)
             & (df['單價元坪'] < df["單價元坪"].quantile(0.95))
             & (df['單價元坪'] > df["單價元坪"].quantile(0.05))
-            & (df['建築完成年月'].astype(float) > 1090000)  # 新增
+            & ((df['建築完成年月'].astype(float) > 1090000)  # 新增
+               | (df['建築完成年月'].isnull()))
             & (df['交易年月日'].astype(float) > 1090000)  # 新增
         )
         groups = df[cond]['year']
@@ -187,7 +189,11 @@ for location in location_all:
         print('建物地址 ', df[cond]['土地位置建物門牌'])
 
         # 為了之後要分類社區用
-        building_list[district] = df[cond]['土地位置建物門牌'].tolist()
+        building_group = df[cond]['建築完成年月']
+        # print(building_group)
+        # building_list[district] = df[cond]['土地位置建物門牌'].astype(
+        #     str).groupby(building_group)
+        building_list[district] = df[cond]['土地位置建物門牌'].groupby(building_group)
 
     # 新增
     print(location, ", 單價元坪 = ", total_money/total_building)
@@ -196,6 +202,11 @@ for location in location_all:
 
     # 原本的code
     print(prices)
+
+    # for i in building_list:
+    #     for key, item in building_list[i]:
+    #         # print(building_list[i].get_group(key), "\n\n")
+    #         print(item)
 
     # 固定用法
     price_history = pd.DataFrame(prices)
@@ -209,37 +220,20 @@ for location in location_all:
 
     # 處理地址資訊
     community_total = {}
+    community_num = 0
 
     for district in building_list:
-
-        # 把"市"以及"區"資料刪除
-        for i in range(len(building_list[district])):
-            building_list[district][i] = building_list[district][i].replace(
-                district, "").replace("臺北市", "")
-
-        # 初始化communitry_total 每個district
         community_total[district] = []
 
-        r = len(building_list[district])
-        i = 0
-        while i < r:
+        # 把"市"以及"區"資料刪除
+        for key, item in building_list[district]:
+            community_num += 1
             l = []
-            # 把第0個抓進新的群
-            l.append(location+district + building_list[district][i])
+            for path in item:
+                path = path.replace(district, "").replace(location, "")
+                l.append(location+district+path)
 
-            # for 倒過來做
-            for j in range(len(building_list[district])-1, i, -1):
-                if string_similar(building_list[district][i], building_list[district][j]) > 0.7:
-                    l.append(location+district +
-                             building_list[district][j])
-                    del building_list[district][j]  # 刪除
-            # 刪除第i個index
-            del building_list[district][i]
-
-            # 把分好的社區接在list_total的後面
             community_total[district].append(l)
-
-            r = len(building_list[district])
 
     # 列印出來所有的社區
     for a in community_total:
@@ -249,6 +243,7 @@ for location in location_all:
 
     #存檔, w = write, r = read
     with open(location+'_community.txt', 'w') as f:
+        f.write("%s新建案社區數量:%s (since 2020)\n" % (location, community_num))
         for key in community_total.keys():
             f.write("%s\n" % (key))
             index = 1

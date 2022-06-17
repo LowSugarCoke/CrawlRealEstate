@@ -26,7 +26,8 @@ import re
 # print("status code = ", r.status_code)
 
 
-r = requests.get('https://market.591.com.tw/4059')
+r = requests.get(
+    'https://www.leju.com.tw/page_search_result?oid=L5891107499320f')
 r.encoding = 'utf-8'
 if r.status_code == 200:
     print(r.content.decode('utf-8'))
