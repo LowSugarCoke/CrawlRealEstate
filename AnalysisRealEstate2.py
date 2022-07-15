@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from matplotlib.font_manager import FontProperties
+
 
 # 自定義需要統計的縣市
 location_all = ["台北市", "桃園市", "台中市", "新北市", "苗栗縣", "花蓮縣", "台東縣",
@@ -9,10 +9,6 @@ location_all = ["台北市", "桃園市", "台中市", "新北市", "苗栗縣",
                 "高雄縣", "新竹市", "新竹縣", "屏東縣"]
 
 # Part 1 資料匯入及處裡
-
-# 自定義字體變數
-myfont = FontProperties(fname=r'./TaipeiSansTCBeta-Regular.ttf')
-myfont.set_size(15)
 
 # 所有縣市對應的英文
 location_str = """台北市 A 苗栗縣 K 花蓮縣 U
